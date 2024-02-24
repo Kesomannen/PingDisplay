@@ -1,0 +1,75 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <AssemblyName>PingDisplay</AssemblyName>
+        <Description>Adds a ping/latency display to the HUD.</Description>
+        <Version>1.0.0</Version>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <LangVersion>latest</LangVersion>
+        <RootNamespace>PingDisplay</RootNamespace>
+        <Company>Kesomannen</Company>
+        <Product>PingDisplay</Product>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
+        <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="BepInEx.Analyzers" Version="1.0.8" PrivateAssets="all" />
+        <PackageReference Include="BepInEx.Core" Version="5.4.21" />
+        <PackageReference Include="BepInEx.PluginInfoProps" Version="1.1.0" />
+        <PackageReference Include="UnityEngine.Modules" Version="2022.3.9" IncludeAssets="compile" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="Assembly-CSharp">
+            <HintPath>lib/Assembly-CSharp.dll</HintPath>
+        </Reference>
+        <Reference Include="Unity.Netcode.Runtime">
+            <HintPath>lib/Unity.Netcode.Runtime.dll</HintPath>
+        </Reference>
+        <Reference Include="Unity.TextMeshPro">
+            <HintPath>lib/Unity.TextMeshPro.dll</HintPath>
+        </Reference>
+        <Reference Include="UnityEngine.UI">
+            <HintPath>lib/UnityEngine.UI.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <PropertyGroup>
+        <LETHAL_COMPANY_PATH>D:\Program\Steam\steamapps\common\Lethal Company</LETHAL_COMPANY_PATH>
+    </PropertyGroup>
+
+    <!--Launch a Process in Parallel-->
+    <UsingTask TaskName="ExecAsync" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+        <ParameterGroup>
+            <!--The file path is the full path to the executable file to run-->
+            <FilePath ParameterType="System.String" Required="true" />
+            <!--The arguments should contain all the command line arguments that need to be sent to the application-->
+            <Arguments ParameterType="System.String" Required="true" />
+        </ParameterGroup>
+        <Task>
+            <Code Type="Fragment" Language="cs">
+                <![CDATA[
+  string name = System.IO.Path.GetFileNameWithoutExtension(FilePath);
+  Log.LogMessage("Starting {0}...", name);        
+  System.Diagnostics.ProcessStartInfo processStartInfo = new System.Diagnostics.ProcessStartInfo(FilePath, Arguments);
+  processStartInfo.UseShellExecute = true;
+  System.Diagnostics.Process.Start(processStartInfo);
+  Log.LogMessage("Finished running process {0}.", name);
+  ]]>
+            </Code>
+        </Task>
+    </UsingTask>
+
+    <Target Name="CopyDLL" AfterTargets="Build">
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(LETHAL_COMPANY_PATH)\BepInEx\plugins" />
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(SolutionDir)\Thunderstore\BepInEx\plugins" />
+    </Target>
+
+    <Target Name="RunGame" AfterTargets="CopyDLL">
+        <ExecAsync FilePath="&quot;$(LETHAL_COMPANY_PATH)\Lethal Company.exe&quot;" Arguments=" " />
+    </Target>
+</Project>
